@@ -161,6 +161,24 @@ The script performs:
 3. **Merge**: Non-destructively injects code into `examples/AppStack.ts` generating `GeneratedAppStack.ts`.
 4. **Drift Detection**: Simulates code modifications to reveal orphaned permissions.
 
+### Using the CLI & Slash Commands
+
+You can execute the Power commands directly via `npm run` or the `auto-architect` CLI:
+
+```bash
+# Scan workspace for AWS SDK calls (.NET C# and Python)
+npm run scan
+# or: npx auto-architect scan
+
+# Synthesize and merge least-privilege CDK constructs into target stack
+npm run apply
+# or: npx auto-architect apply
+
+# Audit target stack for orphaned IAM permissions (drift detection)
+npm run drift
+# or: npx auto-architect drift
+```
+
 ### Running Test Suite
 
 Run the unit tests powered by **Jest** and **ts-jest**:

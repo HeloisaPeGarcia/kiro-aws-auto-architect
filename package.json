@@ -4,8 +4,14 @@
   "description": "Kiro Power para detecção de chamadas AWS SDK e geração de CDK com Least Privilege IAM",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "auto-architect": "./dist/cli.js"
+  },
   "scripts": {
     "build": "tsc",
+    "scan": "node dist/cli.js scan",
+    "apply": "node dist/cli.js apply",
+    "drift": "node dist/cli.js drift",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

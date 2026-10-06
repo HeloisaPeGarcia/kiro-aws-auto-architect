@@ -1,0 +1,110 @@
+{
+  "$schema": "https://kiro.aws.dev/schemas/power-v1.json",
+  "id": "aws-serverless-auto-architect",
+  "name": "AWS Serverless & Infrastructure Auto-Architect",
+  "version": "1.0.0",
+  "description": "Monitors .NET C# and Python application code to synthesize least-privilege AWS CDK TypeScript constructs and detect IAM security drift.",
+  "category": "DevSecOps & Cloud Infrastructure",
+  "entrypoint": "./dist/cli.js",
+  "triggers": [
+    {
+      "event": "onFileSave",
+      "patterns": [
+        "**/*.cs",
+        "**/*.py"
+      ],
+      "action": "scan"
+    },
+    {
+      "event": "onCommand",
+      "command": "/auto-architect scan",
+      "action": "scan"
+    },
+    {
+      "event": "onCommand",
+      "command": "/auto-architect apply",
+      "action": "apply"
+    },
+    {
+      "event": "onCommand",
+      "command": "/auto-architect drift",
+      "action": "drift"
+    }
+  ],
+  "commands": [
+    {
+      "name": "/auto-architect scan",
+      "description": "Scan workspace for AWS SDK calls (.NET and Python) and display detected IAM permissions",
+      "exec": "node dist/cli.js scan"
+    },
+    {
+      "name": "/auto-architect apply",
+      "description": "Synthesize least-privilege AWS CDK constructs and merge non-destructively into the target stack",
+      "exec": "node dist/cli.js apply"
+    },
+    {
+      "name": "/auto-architect drift",
+      "description": "Check for orphaned IAM permissions in the target CDK stack",
+      "exec": "node dist/cli.js drift"
+    }
+  ],
+  "tools": [
+    {
+      "name": "scan_workspace",
+      "description": "Scans .NET C# and Python files in the workspace to detect AWS SDK operations and identify required IAM permissions.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "workspaceDir": {
+            "type": "string",
+            "description": "Root directory of the workspace to scan."
+          }
+        }
+      }
+    },
+    {
+      "name": "generate_cdk_snippet",
+      "description": "Synthesizes TypeScript AWS CDK statements (least-privilege IAM policies, Table.fromTableArn, bucket ARNs) from detected calls.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "calls": {
+            "type": "array",
+            "description": "List of detected AWS SDK calls."
+          }
+        }
+      }
+    },
+    {
+      "name": "apply_to_stack",
+      "description": "Merges synthesized CDK constructs into an existing CDK stack between [kiro-power:start] and [kiro-power:end] tags.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "stackFile": {
+            "type": "string",
+            "description": "Path to the target CDK stack TypeScript file."
+          }
+        },
+        "required": ["stackFile"]
+      }
+    },
+    {
+      "name": "check_drift",
+      "description": "Audits the CDK stack against current codebase to detect orphaned IAM permissions that are no longer actively used.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "stackFile": {
+            "type": "string",
+            "description": "Path to the target CDK stack TypeScript file."
+          }
+        }
+      }
+    }
+  ],
+  "configuration": {
+    "configFile": "kiro-power.json",
+    "ignoreFile": ".kiroignore"
+  }
+}
