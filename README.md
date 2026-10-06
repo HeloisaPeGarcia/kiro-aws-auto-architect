@@ -4,192 +4,193 @@
 [![AWS CDK](https://img.shields.io/badge/AWS%20CDK-v2-orange?logo=amazon-aws)](https://aws.amazon.com/cdk/)
 [![Security](https://img.shields.io/badge/IAM-Least%20Privilege-green?logo=auth0)](SECURITY.md)
 [![Testing](https://img.shields.io/badge/Tested%20with-Jest-red?logo=jest)](https://jestjs.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **Kiro Power** para a IDE experimental **Kiro da AWS**. Analisa código de aplicação em tempo real (**C# .NET** e **Python boto3**) e gera Infraestrutura como Código (**AWS CDK em TypeScript**) aplicando rigorosamente o princípio de **Menor Privilégio (Least Privilege IAM)**, sem wildcards permissivos (`*`) e com prevenção de *drift*.
-
----
-
-## 📌 Sumário
-
-- [Visão Geral](#-visão-geral)
-- [Problema vs Solução](#-problema-vs-solução)
-- [Principais Funcionalidades](#-principais-funcionalidades)
-- [Arquitetura e Fluxo](#-arquitetura-e-fluxo)
-- [Estrutura do Projeto](#-estrutura-do-projeto)
-- [Pré-requisitos e Instalação](#-pré-requisitos-e-instalação)
-- [Como Usar](#-como-usar)
-  - [Executando a Demonstração](#executando-a-demonstração)
-  - [Executando a Suíte de Testes](#executando-a-suíte-de-testes)
-  - [Build do Projeto](#build-do-projeto)
-- [Exemplo de Transformação](#-exemplo-de-transformação)
-- [Configuração](#-configuração)
-- [Segurança](#-segurança)
-- [Licença](#-licença)
+> Autonomous **Kiro Power** for AWS's experimental Kiro IDE. Analyzes application source code in real-time (**C# .NET** and **Python boto3**) to synthesize Infrastructure as Code (**AWS CDK in TypeScript**), strictly enforcing **Least Privilege IAM**, preventing permissive wildcards (`*`), and detecting security drift.
 
 ---
 
-## 📖 Visão Geral
+## 📌 Table of Contents
 
-Desenvolvedores serverless frequentemente concedem permissões IAM excessivas (`FullAccess`, `*`) durante o desenvolvimento local para evitar erros de autorização ou por complexidade de mapear cada ação do SDK.
-
-O **Kiro Auto-Architect** atua dentro da IDE Kiro como um assistente autônomo de DevSecOps:
-1. **Inspeciona** o código da aplicação (.NET e Python) detectando chamadas a SDKs da AWS (`DynamoDB`, `S3`, `SQS`, `SNS`).
-2. **Infere** com exatidão as ações de API necessárias (`PutItem`, `GetObject`, `SendMessage`, etc.).
-3. **Gera e Mescla** o código TypeScript do AWS CDK diretamente na stack existente de forma não-destrutiva.
-4. **Detecta Drift** de permissões quando um método do SDK é removido do código de aplicação.
-
----
-
-## ⚡ Problema vs Solução
-
-| Abordagem Tradicional | Com Kiro Power Auto-Architect |
-| --------------------- | ----------------------------- |
-| Políticas amplas como `s3:*` ou `dynamodb:*` | Permissões cirúrgicas como `dynamodb:PutItem` e `s3:GetObject` |
-| Erros em runtime por esquecer de vincular ARN | Resolução automática de recursos via variáveis de ambiente e arquivos de configuração |
-| S3 Object ARN vs Bucket ARN misturados | Separação estrita: `s3:ListBucket` no Bucket e `s3:PutObject` em `/*` |
-| Conflitos e perda de código manual na stack CDK | Merge seguro entre delimitadores `[kiro-power:start]` e `[kiro-power:end]` |
-| Permissões órfãs acumuladas na stack | `checkDrift()` identifica permissões não mais utilizadas |
+- [Overview](#-overview)
+- [Problem vs. Solution](#-problem-vs-solution)
+- [Key Features](#-key-features)
+- [Architecture & Workflow](#-architecture--workflow)
+- [Project Structure](#-project-structure)
+- [Prerequisites & Installation](#-prerequisites--installation)
+- [Getting Started](#-getting-started)
+  - [Running the Interactive Demo](#running-the-interactive-demo)
+  - [Running Test Suite](#running-test-suite)
+  - [Building the Project](#building-the-project)
+- [Transformation Example](#-transformation-example)
+- [Configuration](#-configuration)
+- [Security Policy](#-security-policy)
+- [License](#-license)
 
 ---
 
-## 🎯 Principais Funcionalidades
+## 📖 Overview
 
-- **Mapeamento Estrito de SDK para IAM:**
-  - **DynamoDB:** `PutItemAsync` &rarr; `dynamodb:PutItem`, `GetItemAsync` &rarr; `dynamodb:GetItem`, `QueryAsync` &rarr; `dynamodb:Query` (com alerta para `ScanAsync`).
-  - **Amazon S3:** Tratamento refinado de ARNs (`bucket` para `ListBucket`, `bucket/*` para operações de objetos).
+Serverless and cloud developers frequently default to overly broad IAM permissions (`FullAccess`, `*`) during local prototyping to prevent authorization roadblocks or avoid manually mapping complex AWS SDK actions.
+
+**Kiro Auto-Architect** runs within the Kiro IDE environment as an autonomous DevSecOps co-pilot:
+1. **Scans** application code (.NET C# and Python) to detect calls to AWS SDKs (`DynamoDB`, `S3`, `SQS`, `SNS`).
+2. **Infers** precise API actions (`PutItem`, `GetObject`, `SendMessage`, etc.).
+3. **Generates & Merges** TypeScript AWS CDK code into existing stacks in a non-destructive manner.
+4. **Detects Drift** by highlighting orphaned IAM permissions whenever SDK calls are removed from application code.
+
+---
+
+## ⚡ Problem vs. Solution
+
+| Traditional Development | With Kiro Power Auto-Architect |
+| ----------------------- | ------------------------------ |
+| Overly permissive wildcards (`s3:*`, `dynamodb:*`) | Laser-focused permissions (`dynamodb:PutItem`, `s3:GetObject`) |
+| Runtime failures due to misconfigured ARNs | Automatic resource and ARN resolution via `.env` and `appsettings.json` |
+| S3 Object ARN vs. Bucket ARN conflicts | Strict separation: `s3:ListBucket` on bucket ARN, `s3:PutObject` on `/*` |
+| Risk of losing manual CDK stack code during generation | Safe, idempotent merge inside `[kiro-power:start]` and `[kiro-power:end]` tags |
+| Accumulation of orphaned IAM permissions | Continuous `checkDrift()` identifies stale, unused permissions |
+
+---
+
+## 🎯 Key Features
+
+- **Strict SDK-to-IAM Mapping:**
+  - **DynamoDB:** `PutItemAsync` &rarr; `dynamodb:PutItem`, `GetItemAsync` &rarr; `dynamodb:GetItem`, `QueryAsync` &rarr; `dynamodb:Query` (flags warnings for `ScanAsync`).
+  - **Amazon S3:** Granular ARN handling (`arn:aws:s3:::bucket` for `ListBucket`, `arn:aws:s3:::bucket/*` for object operations).
   - **Amazon SQS:** `receive_message` &rarr; `sqs:ReceiveMessage`, `delete_message` &rarr; `sqs:DeleteMessage`.
   - **Amazon SNS:** `publish` &rarr; `sns:Publish`.
-- **Merge Idempotente e Não-Destrutivo:** Insere e atualiza código CDK preservando 100% dos recursos definidos manualmente pela equipe.
-- **Supressão Flexível de Falsos Positivos:**
-  - Inline: Linhas comentadas com `// kiro-ignore` ou `# kiro-ignore`.
-  - Global: Regras no arquivo `.kiroignore` e no manifesto `kiro-power.json`.
-- **Governança e Tagging Automatizado:** Aplica tags de conformidade (`ManagedBy: kiro-power`, `SecurityLevel: LeastPrivilege`).
+- **Non-Destructive & Idempotent Merging:** Injects synthesized CDK constructs into target stacks while preserving 100% of the team's manual code.
+- **Flexible False-Positive Suppression:**
+  - Inline: Comment lines with `// kiro-ignore` or `# kiro-ignore`.
+  - Global: Exclusions via `.kiroignore` and the `kiro-power.json` manifest.
+- **Compliance & Automated Tagging:** Injects standardized organizational tags (`ManagedBy: kiro-power`, `SecurityLevel: LeastPrivilege`).
 
 ---
 
-## 🏗️ Arquitetura e Fluxo
+## 🏗️ Architecture & Workflow
 
 ```mermaid
 flowchart LR
-    A[Código-fonte\n.NET C# / Python] -->|Scanner Estático| B(Detector de Chamadas)
-    B -->|Mapeamento IAM| C{Regras de Menor Privilégio}
-    C -->|Geração de IaC| D[Snippet AWS CDK]
-    D -->|Merge Idempotente| E[AppStack.ts\nAWS CDK]
-    E -.->|Monitoramento| F[Drift Detector\nPermissões Órfãs]
+    A[Application Code\n.NET C# / Python] -->|Static Scanner| B(SDK Call Detector)
+    B -->|IAM Mapping| C{Least Privilege Engine}
+    C -->|IaC Synthesis| D[AWS CDK Snippet]
+    D -->|Idempotent Merge| E[Target CDK Stack\nAppStack.ts]
+    E -.->|Continuous Audit| F[Drift Detector\nOrphaned Policies]
 ```
 
 ---
 
-## 📁 Estrutura do Projeto
+## 📁 Project Structure
 
 ```
 .
-├── POWER.md                     # Manifesto de capacidades e triggers do Kiro IDE
-├── kiro-power.json              # Configuração de governança, tags e destinos IaC
-├── .kiroignore                  # Padrões ignorados no scan (testes, mocks, builds)
-├── .gitignore                   # Exclusão de arquivos temporários, builds e segredos
-├── SECURITY.md                  # Política de segurança e reporte de vulnerabilidades
-├── package.json                 # Metadados, scripts e dependências do projeto
-├── tsconfig.json                # Configurações do compilador TypeScript
+├── POWER.md                     # Kiro IDE Power activation & capability manifest
+├── kiro-power.json              # Governance, tagging, and IaC target configuration
+├── .kiroignore                  # File/folder ignore patterns (tests, mocks, build)
+├── .gitignore                   # Version control ignore list
+├── SECURITY.md                  # Security policy and vulnerability disclosure guide
+├── LICENSE                      # MIT license file
+├── package.json                 # Project dependencies, scripts, and metadata
+├── tsconfig.json                # TypeScript compiler configuration
 │
-├── src/                         # Core Engine do Power
-│   ├── types.ts                 # Tipos, interfaces e estruturas de dados
-│   ├── index.ts                 # Orquestrador central (KiroAutoArchitectPower)
-│   ├── mappings/                # Regras de conversão SDK -> IAM Actions
-│   │   ├── dynamodb.ts          # Mapeamentos DynamoDB
-│   │   ├── s3.ts                # Mapeamentos S3 (Bucket vs Object ARN)
-│   │   ├── sqs.ts               # Mapeamentos SQS
-│   │   └── sns.ts               # Mapeamentos SNS
-│   ├── scanner/                 # Leitores e parsers de código
-│   │   ├── scanner.ts           # Definições base dos scanners
-│   │   ├── csharpScanner.ts     # Analisador de chamadas .NET C#
-│   │   ├── pythonScanner.ts     # Analisador de chamadas Python (boto3)
-│   │   └── configResolver.ts    # Resolução de nomes em appsettings.json e .env
-│   ├── generator/               # Geradores de Infraestrutura como Código
-│   │   ├── cdkGenerator.ts      # Síntese de CDK com Table.fromTableArn e IAM
-│   │   └── merger.ts            # Fusão não-destrutiva via tags delimitadoras
-│   ├── drift/                   # Governança contínua
-│   │   └── driftDetector.ts     # Identificação de permissões IAM órfãs
-│   └── __tests__/               # Testes unitários com Jest
-│       └── kiro-power.test.ts   # Cobertura completa de merge, scanners e drift
+├── src/                         # Core Power Engine
+│   ├── types.ts                 # Data models, interfaces, and shared types
+│   ├── index.ts                 # Main orchestrator (KiroAutoArchitectPower)
+│   ├── mappings/                # SDK-to-IAM action translation matrices
+│   │   ├── dynamodb.ts          # DynamoDB permission rules
+│   │   ├── s3.ts                # S3 Bucket vs Object ARN rules
+│   │   ├── sqs.ts               # SQS permission rules
+│   │   └── sns.ts               # SNS permission rules
+│   ├── scanner/                 # Code analyzers & config parsers
+│   │   ├── scanner.ts           # Base scanner definitions
+│   │   ├── csharpScanner.ts     # .NET C# source code parser
+│   │   ├── pythonScanner.ts     # Python (boto3) source code parser
+│   │   └── configResolver.ts    # Config resolution (.env, appsettings.json)
+│   ├── generator/               # Infrastructure as Code generators
+│   │   ├── cdkGenerator.ts      # CDK synthesizer (Table.fromTableArn, IAM statements)
+│   │   └── merger.ts            # Non-destructive stack merger
+│   ├── drift/                   # Continuous security drift detection
+│   │   └── driftDetector.ts     # Identifies orphaned IAM permissions
+│   └── __tests__/               # Unit test suite (Jest)
+│       └── kiro-power.test.ts   # Comprehensive coverage for scanners, merger & drift
 │
-└── examples/                    # Suíte de demonstração prática
-    ├── OrdersService.cs         # Exemplo de microsserviço C# (.NET 8)
-    ├── NotificationWorker.py    # Exemplo de worker Python (boto3)
-    ├── AppStack.ts              # Stack CDK original da equipe
-    ├── GeneratedAppStack.ts     # Stack resultante após aplicação do Power
-    └── demo_runner.js           # Script de demonstração ponta a ponta
+└── examples/                    # End-to-end demonstration assets
+    ├── OrdersService.cs         # Sample .NET 8 microservice with AWS SDK
+    ├── NotificationWorker.py    # Sample Python worker with boto3
+    ├── AppStack.ts              # Team's original AWS CDK stack
+    ├── GeneratedAppStack.ts     # Resulting CDK stack post-merger
+    └── demo_runner.js           # End-to-end demonstration runner script
 ```
 
 ---
 
-## 🚀 Pré-requisitos e Instalação
+## 🚀 Prerequisites & Installation
 
-### Pré-requisitos
-- **Node.js**: v18 ou superior
-- **npm**: v9 ou superior
+### Prerequisites
+- **Node.js**: v18.x or higher
+- **npm**: v9.x or higher
 
-### Instalação
+### Installation
 
-Clone o repositório e instale as dependências:
+Clone the repository and install all dependencies:
 
 ```bash
-git clone https://github.com/seu-usuario/aws-serverless-auto-architect-power.git
-cd aws-serverless-auto-architect-power
+git clone https://github.com/your-username/kiro-aws-auto-architect.git
+cd kiro-aws-auto-architect
 npm install
 ```
 
-> **Nota:** O pacote `aws-cdk-lib` e `constructs` estão inclusos em `devDependencies` para prover suporte e tipagem completos ao código de demonstração e geração de Stacks CDK.
+> **Note:** `aws-cdk-lib` and `constructs` are included in `devDependencies` to provide complete TypeScript typings for your CDK stacks and example code.
 
 ---
 
-## 💻 Como Usar
+## 💻 Getting Started
 
-### Executando a Demonstração
+### Running the Interactive Demo
 
-O script `demo_runner.js` executa uma simulação ponta a ponta das 4 fases do Power:
+Run the end-to-end demonstration script to see all four phases of the Power in action:
 
 ```bash
 npm run demo
 ```
 
-O script realizará:
-1. **Scan** em `OrdersService.cs` e `NotificationWorker.py`.
-2. **Geração** de statements IAM com menor privilégio.
-3. **Merge** seguro dentro de `examples/AppStack.ts` gerando `GeneratedAppStack.ts`.
-4. **Verificação de Drift**, simulando a remoção de operações no código.
+The script performs:
+1. **Scan**: Inspects `OrdersService.cs` and `NotificationWorker.py`.
+2. **IaC Generation**: Synthesizes least-privilege IAM statements.
+3. **Merge**: Non-destructively injects code into `examples/AppStack.ts` generating `GeneratedAppStack.ts`.
+4. **Drift Detection**: Simulates code modifications to reveal orphaned permissions.
 
-### Executando a Suíte de Testes
+### Running Test Suite
 
-Os testes são executados com **Jest** e **ts-jest**:
+Run the unit tests powered by **Jest** and **ts-jest**:
 
 ```bash
-# Rodar todos os testes unitários
+# Run all tests
 npm test
 
-# Modo de observação (watch)
+# Run tests in watch mode
 npm run test:watch
 
-# Relatório de cobertura de código
+# Generate coverage report
 npm run test:coverage
 ```
 
-### Build do Projeto
+### Building the Project
 
-Para compilar o código TypeScript para JavaScript distribuível:
+Compile TypeScript into JavaScript and output type definitions (`.d.ts`):
 
 ```bash
 npm run build
 ```
 
-Os artefatos compilados e arquivos de declaração (`.d.ts`) serão gerados no diretório `dist/`.
+The compiled output will be generated inside the `dist/` directory.
 
 ---
 
-## 🔍 Exemplo de Transformação
+## 🔍 Transformation Example
 
-### 1. Código da Aplicação (`OrdersService.cs`)
+### 1. Application Code (`OrdersService.cs`)
 
 ```csharp
 await _dynamoDb.PutItemAsync(new PutItemRequest {
@@ -198,11 +199,11 @@ await _dynamoDb.PutItemAsync(new PutItemRequest {
 });
 ```
 
-### 2. AWS CDK Gerado Automaticamente
+### 2. Auto-Generated AWS CDK Code
 
 ```typescript
 // [kiro-power:start]
-// Gerado automaticamente pelo Kiro Power: AWS Serverless Auto-Architect
+// Generated automatically by Kiro Power: AWS Serverless Auto-Architect
 const ordersTable = dynamodb.Table.fromTableArn(
   this,
   'KiroOrdersTable',
@@ -219,11 +220,11 @@ appFunction.addToRolePolicy(new iam.PolicyStatement({
 
 ---
 
-## ⚙️ Configuração
+## ⚙️ Configuration
 
 ### `kiro-power.json`
 
-Permite customizar destinos de IaC, tags corporativas e regras de alerta:
+Customize target stacks, enterprise tags, and security alerts:
 
 ```json
 {
@@ -249,7 +250,7 @@ Permite customizar destinos de IaC, tags corporativas e regras de alerta:
 
 ### `.kiroignore`
 
-Padrões de arquivos e pastas excluídos do escopo de escaneamento:
+Ignore paths and file patterns during scanning:
 
 ```gitignore
 bin/
@@ -262,12 +263,12 @@ node_modules/
 
 ---
 
-## 🔒 Segurança
+## 🔒 Security Policy
 
-Consulte [SECURITY.md](SECURITY.md) para detalhes sobre a política de segurança, diretrizes de menor privilégio e instruções para reporte confidencial de vulnerabilidades.
+For security vulnerability disclosure procedures, least privilege guarantees, and ARN scoping details, please review [SECURITY.md](SECURITY.md).
 
 ---
 
-## 📄 Licença
+## 📄 License
 
-Distribuído sob a licença **MIT**. Consulte o arquivo [LICENSE](LICENSE) para obter mais informações.
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
