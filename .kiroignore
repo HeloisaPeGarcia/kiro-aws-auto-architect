@@ -1,0 +1,16 @@
+# Kiro Power: Padrões de arquivos e diretórios ignorados
+bin/
+obj/
+node_modules/
+dist/
+out/
+
+# Testes e Mocks
+**/Tests/**
+**/tests/**
+**/*Test.cs
+**/*Tests.cs
+**/*_test.py
+**/test_*.py
+**/Mocks/**
+**/Fakes/**
