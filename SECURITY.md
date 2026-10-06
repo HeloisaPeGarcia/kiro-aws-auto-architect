@@ -1,47 +1,47 @@
-# Política de Segurança (Security Policy)
+# Security Policy
 
-## 🛡️ Versões Suportadas
+## 🛡️ Supported Versions
 
-As versões a seguir recebem atualizações de segurança e correções ativas:
+The following versions currently receive security updates and active patches:
 
-| Versão | Suportada          |
+| Version | Supported          |
 | ------- | ------------------ |
 | 1.0.x   | :white_check_mark: |
 | < 1.0   | :x:                |
 
 ---
 
-## 🔒 Princípios de Segurança do Projeto
+## 🔒 Core Security Principles
 
-O **AWS Serverless Auto-Architect (Kiro Power)** foi concebido sob a premissa de **Zero Trust** e **Menor Privilégio (Least Privilege IAM)** para infraestrutura como código (IaC):
+**AWS Serverless Auto-Architect (Kiro Power)** is engineered under **Zero Trust** and strict **Least Privilege IAM** principles for Infrastructure as Code (IaC):
 
-1. **Sem Wildcards Permissivos:** Nenhuma regra gerada utiliza ações genéricas (ex: `s3:*`, `dynamodb:*`).
-2. **Escopo Preciso de Recursos (ARNs):**
-   - **Amazon S3:** Diferenciação estrita entre operações de Bucket (`s3:ListBucket` em `arn:aws:s3:::bucket`) e operações de Objetos (`s3:GetObject`, `s3:PutObject` em `arn:aws:s3:::bucket/*`).
-   - **Amazon DynamoDB:** Utilização de `Table.fromTableArn()` garantindo escopo e integração segura com permissões IAM no AWS CDK.
-3. **Merge Não-Destrutivo:** O gerador nunca sobrescreve código arbitrário. A inserção e atualização de código CDK ocorrem exclusivamente entre delimitadores controlados (`// [kiro-power:start]` e `// [kiro-power:end]`).
-4. **Detecção de Drift:** Monitoramento contínuo para apontar permissões IAM outrora concedidas que se tornaram órfãs após remoção de chamadas no código-fonte da aplicação.
-
----
-
-## 🚨 Reportando uma Vulnerabilidade
-
-Levamos a segurança do nosso projeto e das permissões de nuvem geradas a sério. Se você encontrar uma falha de segurança ou potencial brecha na geração de IAM:
-
-1. **Não abra uma Issue pública** no GitHub relatando os detalhes da vulnerabilidade.
-2. Envie um e-mail com os detalhes técnicos e passos para reprodução para:
-   - **E-mail de Segurança:** `security@suaempresa.com` (ou utilize o canal oficial de [GitHub Security Advisories](https://github.com)).
-3. Inclua, se possível:
-   - Descrição detalhada da vulnerabilidade.
-   - Código de exemplo (.NET C# ou Python) que causa a falha na inferência de permissões.
-   - O snippet de política gerado incorretamente.
-   - Impacto estimado.
-
-Responderemos a confirmação inicial do relatório em até **48 horas úteis**, mantendo você atualizado sobre a investigação e os passos de correção.
+1. **No Overly Permissive Wildcards:** No generated policies ever include generic wildcards (e.g., `s3:*`, `dynamodb:*`).
+2. **Precise Resource ARN Scoping:**
+   - **Amazon S3:** Strict demarcation between bucket-level operations (`s3:ListBucket` on `arn:aws:s3:::bucket`) and object-level operations (`s3:GetObject`, `s3:PutObject` on `arn:aws:s3:::bucket/*`).
+   - **Amazon DynamoDB:** Enforces `Table.fromTableArn()` to prevent ambiguous table references and ensure proper CDK IAM grant scoping.
+3. **Non-Destructive Code Merging:** The synthesizer never overwrites arbitrary code. All CDK additions occur strictly between managed delimiter tags (`// [kiro-power:start]` and `// [kiro-power:end]`).
+4. **Drift Detection:** Continuously audits generated IAM statements to alert when application code changes leave behind unused, orphaned permissions.
 
 ---
 
-## ⚠️ Boas Práticas ao Usar este Repositório
+## 🚨 Reporting a Vulnerability
 
-- **Nunca comite credenciais AWS:** Nunca insira chaves de acesso (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`), senhas ou tokens no código ou nos arquivos de configuração (`.env`, `appsettings.json`).
-- **Validação de IaC:** Sempre revise as permissões geradas antes de rodar `cdk deploy` em ambientes de produção.
+We take the security of this project and cloud infrastructure synthesis seriously. If you discover a security issue or flaw in IAM inference:
+
+1. **Do not disclose the vulnerability in a public GitHub issue.**
+2. Send technical details, reproduction steps, and impact assessment to:
+   - **Security Contact:** Open a confidential [GitHub Security Advisory](https://github.com) or reach out via project security channels.
+3. Please include:
+   - Detailed description of the vulnerability.
+   - Sample application code (.NET C# or Python) causing the incorrect IAM inference.
+   - The generated IAM policy snippet.
+   - Estimated security impact.
+
+We will acknowledge receipt within **48 business hours** and provide progress updates until a patch is released.
+
+---
+
+## ⚠️ Safe Usage Guidelines
+
+- **Never Commit AWS Credentials:** Do not store access keys (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`), session tokens, or sensitive values in your repository or config files (`.env`, `appsettings.json`).
+- **Review Before Deploying:** Always inspect generated CDK policies and run `cdk diff` prior to executing `cdk deploy` against production environments.
