@@ -159,7 +159,7 @@ npm install git+https://github.com/HeloisaPeGarcia/kiro-aws-auto-architect.git
 
 Import in your TypeScript / JavaScript code:
 ```typescript
-import { KiroAutoArchitectPower } from 'aws-serverless-auto-architect-power';
+import { KiroAutoArchitectPower } from '@heloisapegarcia/kiro-aws-auto-architect';
 ```
 
 #### Option 4: Local development & contributing
