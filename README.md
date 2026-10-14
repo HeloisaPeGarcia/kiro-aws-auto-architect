@@ -133,15 +133,46 @@ flowchart LR
 
 ### Installation
 
-Clone the repository and install all dependencies:
+#### Option 1: Install globally via Git (CLI tool)
+Install the `auto-architect` command line tool directly from GitHub:
 
 ```bash
-git clone https://github.com/your-username/kiro-aws-auto-architect.git
-cd kiro-aws-auto-architect
-npm install
+npm install -g git+https://github.com/HeloisaPeGarcia/kiro-aws-auto-architect.git
 ```
 
-> **Note:** `aws-cdk-lib` and `constructs` are included in `devDependencies` to provide complete TypeScript typings for your CDK stacks and example code.
+Once installed, use it from anywhere in your terminal:
+```bash
+auto-architect scan
+auto-architect apply
+auto-architect drift
+```
+
+#### Option 2: Run directly without installing (via `npx`)
+```bash
+npx git+https://github.com/HeloisaPeGarcia/kiro-aws-auto-architect.git scan
+```
+
+#### Option 3: Install as a dependency in a Node.js / TypeScript project
+```bash
+npm install git+https://github.com/HeloisaPeGarcia/kiro-aws-auto-architect.git
+```
+
+Import in your TypeScript / JavaScript code:
+```typescript
+import { KiroAutoArchitectPower } from 'aws-serverless-auto-architect-power';
+```
+
+#### Option 4: Local development & contributing
+Clone the repository and build locally:
+
+```bash
+git clone https://github.com/HeloisaPeGarcia/kiro-aws-auto-architect.git
+cd kiro-aws-auto-architect
+npm install
+npm run build
+```
+
+> **Note:** When installing directly via Git, npm automatically executes `npm run prepare` (compiling the TypeScript source files to `dist/`) without requiring manual build steps.
 
 ---
 

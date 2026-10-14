@@ -7,8 +7,16 @@
   "bin": {
     "auto-architect": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "power.json",
+    "kiro-power.json",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
+    "prepare": "npm run build",
     "scan": "node dist/cli.js scan",
     "apply": "node dist/cli.js apply",
     "drift": "node dist/cli.js drift",
@@ -16,6 +24,10 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "demo": "node examples/demo_runner.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HeloisaPeGarcia/kiro-aws-auto-architect.git"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
