@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Kiro Power para detecção de chamadas AWS SDK e geração de CDK com Least Privilege IAM",
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
