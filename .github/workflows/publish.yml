@@ -1,4 +1,4 @@
-name: Publish to GitHub Packages
+name: Publish package to npm
 
 on:
   push:
@@ -6,30 +6,87 @@ on:
       - main
   workflow_dispatch:
 
+# Evita duas publicações simultâneas.
+# Tags não disparam este workflow, pois o gatilho aceita somente a branch main.
+concurrency:
+  group: publish-main
+  cancel-in-progress: false
+
 jobs:
   publish:
+    name: Build, publish and tag package
     runs-on: ubuntu-latest
+
+    # contents: write é necessário para criar e enviar a tag Git.
     permissions:
-      contents: read
-      packages: write
+      contents: write
+
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@heloisapegarcia'
+          node-version: 20
+          registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Build project
+      - name: Run tests
+        run: npm test -- --runInBand --passWithNoTests
+
+      - name: Build package
         run: npm run build
 
-      - name: Publish to GitHub Packages
-        run: npm publish || echo "Package version already published or skipped."
+      - name: Publish package and create version tag
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          TAG="v${VERSION}"
+
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::error::The NPM_TOKEN secret is required to publish to npmjs.com."
+            exit 1
+          fi
+
+          echo "Package: ${PACKAGE_NAME}"
+          echo "Version: ${VERSION}"
+          echo "Tag: ${TAG}"
+
+          if npm view "${PACKAGE_NAME}@${VERSION}" version \
+            --registry=https://registry.npmjs.org >/dev/null 2>&1; then
+            echo "Version ${PACKAGE_NAME}@${VERSION} is already published."
+            echo "Skipping npm publish."
+          else
+            echo "Publishing ${PACKAGE_NAME}@${VERSION} to npmjs.com..."
+
+            npm publish \
+              --access public \
+              --registry=https://registry.npmjs.org
+          fi
+
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" \
+            >/dev/null 2>&1; then
+            echo "Tag ${TAG} already exists."
+            echo "Skipping tag creation."
+          else
+            echo "Creating tag ${TAG}..."
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            git tag --annotate "${TAG}" \
+              --message "Release ${PACKAGE_NAME}@${VERSION}"
+
+            git push origin "${TAG}"
+
+            echo "Tag ${TAG} created successfully."
+          fi
