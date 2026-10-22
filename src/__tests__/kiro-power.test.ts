@@ -28,7 +28,7 @@ describe('StackMerger', () => {
     const secondPass = StackMerger.merge(firstPass, updatedSnippet);
 
     // Não deve haver dois blocos START_TAG
-    const occurrences = (secondPass.match(new RegExp(StackMerger.START_TAG, 'g')) ?? []).length;
+    const occurrences = secondPass.split(StackMerger.START_TAG).length - 1;
     expect(occurrences).toBe(1);
 
     // Deve conter o novo snippet e não o antigo
@@ -184,4 +184,3 @@ export class AppStack extends cdk.Stack {
     expect(report.orphanPermissions).toHaveLength(0);
   });
 });
-
